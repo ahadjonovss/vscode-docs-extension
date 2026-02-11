@@ -1,8 +1,8 @@
 {
   "name": "docky",
   "displayName": "Docky - Documentation Companion",
-  "description": "Keep your code documentation organized with beautiful side-by-side markdown viewing, auto-creation, and smart navigation",
-  "version": "1.1.0",
+  "description": "Keep your code documentation organized with beautiful side-by-side markdown viewing. Works with all languages - JavaScript, TypeScript, Python, Java, Dart, and more!",
+  "version": "1.1.6",
   "publisher": "ahadjonovss",
   "author": {
     "name": "Samandar Ahadjonov",
@@ -28,7 +28,13 @@
     "side-by-side",
     "breadcrumb",
     "dart",
-    "flutter"
+    "flutter",
+    "javascript",
+    "typescript",
+    "python",
+    "java",
+    "go",
+    "rust"
   ],
   "icon": "assets/images/logo.png",
   "galleryBanner": {
@@ -51,8 +57,8 @@
         "command": "docky.openDocumentation",
         "title": "Open Documentation with Docky",
         "icon": {
-          "light": "assets/images/open_doc.png",
-          "dark": "assets/images/open_doc.png"
+          "light": "assets/images/icon.png",
+          "dark": "assets/images/icon.png"
         }
       }
     ],

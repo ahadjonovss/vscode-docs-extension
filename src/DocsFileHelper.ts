@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { MappingManager } from './MappingManager';
-import { DockyTemplates } from './DockyTemplates';
 
 /**
  * Helper class for managing documentation files
@@ -98,117 +97,24 @@ export class DocsFileHelper {
     }
 
     /**
-     * Generates default content for Dart files
+     * Generates minimal content - just a heading with file name
      */
     private generateDefaultContent(sourceFilePath: string): string {
         const fileName = path.basename(sourceFilePath);
         const ext = path.extname(sourceFilePath);
-
-        // Check if it's a Dart file
-        if (ext === '.dart') {
-            const fileType = DockyTemplates.inferDartFileType(fileName);
-            return DockyTemplates.generateDartTemplate(fileName, fileType);
-        }
-
-        // Fallback to generic template for non-Dart files
-        return this.generateGenericTemplate(sourceFilePath);
-    }
-
-    /**
-     * Generic template for non-Dart files
-     */
-    private generateGenericTemplate(sourceFilePath: string): string {
-        const fileName = path.basename(sourceFilePath);
-        const ext = path.extname(sourceFilePath);
         const baseName = path.basename(sourceFilePath, ext);
-        const date = new Date().toISOString().split('T')[0];
 
-        return `# ${baseName}
-
-> **File:** \`${fileName}\`
-> **Created:** ${date}
-
-## 📋 Overview
-
-File description.
-
-## 📖 Usage
-
-\`\`\`
-// Code example
-\`\`\`
-
-## 📝 Notes
-
-- Important information
-- TODO
-
-## 📅 Change History
-
-- **${date}**: Documentation created
-`;
+        // Create minimal documentation - just a heading
+        return `# ${baseName}\n\n`;
     }
 
+
     /**
-     * Generates default module content
+     * Generates minimal module content
      */
     private generateDefaultModuleContent(moduleName: string): string {
-        const date = new Date().toISOString().split('T')[0];
         const pascalName = this.toPascalCase(moduleName);
-
-        return `# ${pascalName} Module
-
-> **Module:** \`${moduleName}\`
-> **Created:** ${date}
-
-## 📋 Overview
-
-**${pascalName}** module - ${moduleName} section of the application.
-
-## 🏗️ Structure
-
-\`\`\`
-${moduleName}/
-├── ${moduleName}_service.dart
-├── ${moduleName}_model.dart
-├── ${moduleName}_controller.dart
-└── widgets/
-    └── ${moduleName}_widget.dart
-\`\`\`
-
-## 🔑 Key Components
-
-### Service Layer
-- **${pascalName}Service** - Business logic
-
-### Data Layer
-- **${pascalName}Model** - Data model
-
-### Presentation Layer
-- **${pascalName}Controller** - State management
-- **${pascalName}Widget** - UI components
-
-## 📖 Usage
-
-\`\`\`dart
-// Module usage
-import 'package:app/${moduleName}/${moduleName}_service.dart';
-
-final service = ${pascalName}Service();
-\`\`\`
-
-## 🔗 Dependencies
-
-### External
-- \`package:flutter/material.dart\`
-
-### Internal
-- Other modules
-
-## 📅 Change History
-
-- **${date}**: Module created
-`;
+        return `# ${pascalName} Module\n\n`;
     }
 
     /**

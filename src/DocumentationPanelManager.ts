@@ -116,13 +116,16 @@ export class DocumentationPanelManager implements vscode.Disposable {
             }
         );
 
-        // Handle messages from webview (breadcrumb clicks and create docs)
+        // Handle messages from webview (breadcrumb clicks, create docs, and external links)
         this.panel.webview.onDidReceiveMessage(
             async (message) => {
                 if (message.command === 'navigateToModule') {
                     await this.navigateToModuleDocs(message.folderPath);
                 } else if (message.command === 'createDocs') {
                     await this.createAndOpenDocsFile(message.sourceFile);
+                } else if (message.command === 'openExternal') {
+                    // Open URL in external browser
+                    vscode.env.openExternal(vscode.Uri.parse(message.url));
                 }
             }
         );
@@ -488,6 +491,48 @@ export class DocumentationPanelManager implements vscode.Disposable {
         .add-docs-button:active {
             transform: translateY(1px);
         }
+
+        /* Donation Button */
+        .donation-footer {
+            text-align: center;
+            padding: 24px;
+            border-top: 1px solid var(--vscode-panel-border);
+            margin-top: 40px;
+            background-color: var(--vscode-sideBar-background);
+        }
+
+        .donate-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--vscode-font-family);
+            font-weight: 500;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .donate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .donate-button:active {
+            transform: translateY(0);
+        }
+
+        .donation-text {
+            font-size: 0.85em;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -502,6 +547,13 @@ export class DocumentationPanelManager implements vscode.Disposable {
 
     <div class="content">
         ${markdownHtml}
+    </div>
+
+    <div class="donation-footer">
+        <a href="https://www.tirikchilik.uz/ahadjonovss" class="donate-button" id="donateBtn">
+            ☕ Support the Developer
+        </a>
+        <div class="donation-text">If you find Docky useful, consider buying me a coffee!</div>
     </div>
 
     <script nonce="${nonce}">
@@ -531,6 +583,16 @@ export class DocumentationPanelManager implements vscode.Disposable {
                         sourceFile: sourceFile
                     });
                 }
+            }
+
+            // Handle donate button clicks
+            if (target.id === 'donateBtn' || target.classList.contains('donate-button')) {
+                event.preventDefault();
+                const url = target.href || 'https://www.tirikchilik.uz/ahadjonovss';
+                vscode.postMessage({
+                    command: 'openExternal',
+                    url: url
+                });
             }
         });
     </script>
