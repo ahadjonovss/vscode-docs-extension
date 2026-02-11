@@ -1,0 +1,521 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import MarkdownIt from 'markdown-it';
+import { DocsFileHelper } from './DocsFileHelper';
+import { BreadcrumbBuilder } from './BreadcrumbBuilder';
+import { FileWatcher } from './FileWatcher';
+
+/**
+ * Manages the documentation webview panel
+ * Ensures only one panel exists at a time and handles all panel operations
+ *
+ * Key responsibilities:
+ * - Create and manage webview panel lifecycle
+ * - Update panel content when switching files
+ * - Handle breadcrumb navigation clicks
+ * - Auto-refresh when docs file changes
+ */
+export class DocumentationPanelManager implements vscode.Disposable {
+    private panel: vscode.WebviewPanel | undefined;
+    private readonly context: vscode.ExtensionContext;
+    private readonly md: MarkdownIt;
+    private readonly docsHelper: DocsFileHelper;
+    private readonly breadcrumbBuilder: BreadcrumbBuilder;
+    private readonly fileWatcher: FileWatcher;
+    private currentSourceFile: string | undefined;
+
+    constructor(context: vscode.ExtensionContext) {
+        this.context = context;
+        this.md = new MarkdownIt({
+            html: true,
+            linkify: true,
+            typographer: true,
+            breaks: true
+        });
+        this.docsHelper = new DocsFileHelper();
+        this.breadcrumbBuilder = new BreadcrumbBuilder();
+        this.fileWatcher = new FileWatcher();
+    }
+
+    /**
+     * Shows documentation for the specified source file
+     * Creates panel if it doesn't exist, reveals it if it does
+     */
+    public async showDocumentation(sourceFilePath: string): Promise<void> {
+        const docsPath = this.docsHelper.getDocsFilePath(sourceFilePath);
+
+        // Ensure docs file exists (create with template if needed)
+        await this.docsHelper.ensureDocsFileExists(docsPath, sourceFilePath);
+
+        if (this.panel) {
+            // Panel exists, just reveal and update content
+            this.panel.reveal(vscode.ViewColumn.Beside);
+            await this.updateContent(sourceFilePath, docsPath);
+        } else {
+            // Create new panel
+            this.createPanel(sourceFilePath, docsPath);
+        }
+
+        // Watch the docs file for changes
+        this.fileWatcher.watchFile(docsPath, () => {
+            if (this.panel && this.currentSourceFile) {
+                this.updateContent(this.currentSourceFile, docsPath);
+            }
+        });
+    }
+
+    /**
+     * Updates documentation when active file changes
+     */
+    public async updateDocumentation(sourceFilePath: string): Promise<void> {
+        if (!this.panel) {
+            return;
+        }
+
+        const docsPath = this.docsHelper.getDocsFilePath(sourceFilePath);
+        await this.docsHelper.ensureDocsFileExists(docsPath, sourceFilePath);
+        await this.updateContent(sourceFilePath, docsPath);
+
+        // Update file watcher
+        this.fileWatcher.watchFile(docsPath, () => {
+            if (this.panel && this.currentSourceFile) {
+                this.updateContent(this.currentSourceFile, docsPath);
+            }
+        });
+    }
+
+    /**
+     * Checks if panel is currently active
+     */
+    public isPanelActive(): boolean {
+        return this.panel !== undefined;
+    }
+
+    /**
+     * Creates the webview panel
+     */
+    private createPanel(sourceFilePath: string, docsPath: string): void {
+        this.panel = vscode.window.createWebviewPanel(
+            'inlineDocsViewer',
+            'Documentation',
+            vscode.ViewColumn.Beside,
+            {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                localResourceRoots: []
+            }
+        );
+
+        // Handle messages from webview (breadcrumb clicks)
+        this.panel.webview.onDidReceiveMessage(
+            async (message) => {
+                if (message.command === 'navigateToModule') {
+                    await this.navigateToModuleDocs(message.folderPath);
+                }
+            }
+        );
+
+        // Clean up when panel is closed
+        this.panel.onDidDispose(() => {
+            this.panel = undefined;
+            this.currentSourceFile = undefined;
+            this.fileWatcher.dispose();
+        });
+
+        // Set initial content
+        this.updateContent(sourceFilePath, docsPath);
+    }
+
+    /**
+     * Updates the content of the webview panel
+     */
+    private async updateContent(sourceFilePath: string, docsPath: string): Promise<void> {
+        if (!this.panel) {
+            return;
+        }
+
+        this.currentSourceFile = sourceFilePath;
+
+        // Read markdown content
+        let markdownContent = '';
+        if (fs.existsSync(docsPath)) {
+            markdownContent = fs.readFileSync(docsPath, 'utf-8');
+        }
+
+        // Render markdown to HTML
+        const htmlContent = this.md.render(markdownContent);
+
+        // Generate breadcrumb
+        const breadcrumb = this.breadcrumbBuilder.buildBreadcrumb(sourceFilePath, false);
+
+        // Update panel
+        const fileName = path.basename(sourceFilePath);
+        this.panel.title = `📖 ${fileName}`;
+        this.panel.webview.html = this.generateWebviewHtml(
+            htmlContent,
+            breadcrumb,
+            docsPath,
+            fileName
+        );
+    }
+
+    /**
+     * Navigates to module-level documentation
+     * Called when user clicks a folder in breadcrumb
+     */
+    private async navigateToModuleDocs(folderPath: string): Promise<void> {
+        const moduleName = path.basename(folderPath);
+        const moduleDocsPath = path.join(folderPath, `${moduleName}.module.docs.md`);
+
+        // Ensure module docs file exists
+        await this.docsHelper.ensureModuleDocsFileExists(moduleDocsPath, moduleName);
+
+        // Read and render module docs
+        let markdownContent = '';
+        if (fs.existsSync(moduleDocsPath)) {
+            markdownContent = fs.readFileSync(moduleDocsPath, 'utf-8');
+        }
+
+        const htmlContent = this.md.render(markdownContent);
+        const breadcrumb = this.breadcrumbBuilder.buildBreadcrumb(folderPath, true);
+
+        if (this.panel) {
+            this.panel.title = `📦 ${moduleName} Module`;
+            this.panel.webview.html = this.generateWebviewHtml(
+                htmlContent,
+                breadcrumb,
+                moduleDocsPath,
+                `${moduleName} Module`
+            );
+        }
+
+        // Watch module docs file
+        this.fileWatcher.watchFile(moduleDocsPath, () => {
+            if (this.panel) {
+                this.navigateToModuleDocs(folderPath);
+            }
+        });
+    }
+
+    /**
+     * Generates the complete HTML for the webview
+     * Includes styling, breadcrumb, and rendered markdown
+     */
+    private generateWebviewHtml(
+        markdownHtml: string,
+        breadcrumb: string,
+        docsPath: string,
+        title: string
+    ): string {
+        const nonce = this.getNonce();
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
+    <title>${title}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-editor-background);
+            line-height: 1.6;
+        }
+
+        /* Header Section */
+        .header {
+            position: sticky;
+            top: 0;
+            background-color: var(--vscode-sideBar-background);
+            border-bottom: 2px solid var(--vscode-panel-border);
+            padding: 16px 24px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .breadcrumb-container {
+            margin-bottom: 12px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            font-size: 0.95em;
+        }
+
+        .breadcrumb-item {
+            cursor: pointer;
+            color: var(--vscode-textLink-foreground);
+            padding: 6px 10px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .breadcrumb-item:hover {
+            background-color: var(--vscode-list-hoverBackground);
+            color: var(--vscode-textLink-activeForeground);
+        }
+
+        .breadcrumb-separator {
+            color: var(--vscode-descriptionForeground);
+            opacity: 0.6;
+            user-select: none;
+            font-weight: bold;
+        }
+
+        .breadcrumb-current {
+            color: var(--vscode-foreground);
+            font-weight: 600;
+            cursor: default;
+            background-color: var(--vscode-badge-background);
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+
+        .docs-path {
+            font-size: 0.85em;
+            color: var(--vscode-descriptionForeground);
+            font-family: var(--vscode-editor-font-family);
+            padding: 8px 12px;
+            background-color: var(--vscode-textCodeBlock-background);
+            border-radius: 4px;
+            border-left: 3px solid var(--vscode-textLink-foreground);
+        }
+
+        /* Content Section */
+        .content {
+            padding: 32px 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Markdown Styling */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--vscode-foreground);
+            font-weight: 600;
+            line-height: 1.3;
+            margin-top: 24px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 2em;
+            border-bottom: 2px solid var(--vscode-panel-border);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 1.6em;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            padding-bottom: 8px;
+        }
+
+        h3 { font-size: 1.3em; }
+        h4 { font-size: 1.1em; }
+        h5 { font-size: 1em; }
+        h6 { font-size: 0.9em; opacity: 0.9; }
+
+        p {
+            margin: 16px 0;
+        }
+
+        a {
+            color: var(--vscode-textLink-foreground);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: var(--vscode-textLink-activeForeground);
+            text-decoration: underline;
+        }
+
+        code {
+            font-family: var(--vscode-editor-font-family);
+            font-size: 0.9em;
+            padding: 3px 6px;
+            background-color: var(--vscode-textCodeBlock-background);
+            border-radius: 3px;
+            color: var(--vscode-textPreformat-foreground);
+        }
+
+        pre {
+            background-color: var(--vscode-textCodeBlock-background);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid var(--vscode-panel-border);
+        }
+
+        pre code {
+            padding: 0;
+            background-color: transparent;
+            font-size: 0.85em;
+        }
+
+        blockquote {
+            margin: 16px 0;
+            padding: 12px 16px;
+            color: var(--vscode-descriptionForeground);
+            border-left: 4px solid var(--vscode-textBlockQuote-border);
+            background-color: var(--vscode-textBlockQuote-background);
+            border-radius: 4px;
+        }
+
+        blockquote p {
+            margin: 8px 0;
+        }
+
+        ul, ol {
+            padding-left: 32px;
+            margin: 16px 0;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            border: 1px solid var(--vscode-panel-border);
+        }
+
+        th, td {
+            border: 1px solid var(--vscode-panel-border);
+            padding: 10px 14px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--vscode-sideBar-background);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--vscode-list-hoverBackground);
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--vscode-panel-border);
+            margin: 32px 0;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 16px 0;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 1.4em;
+            margin-bottom: 12px;
+            color: var(--vscode-foreground);
+            font-weight: 600;
+        }
+
+        .empty-description {
+            font-size: 1em;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="breadcrumb-container">
+            <div class="breadcrumb" id="breadcrumb">
+                ${breadcrumb}
+            </div>
+        </div>
+        <div class="docs-path">📄 ${docsPath}</div>
+    </div>
+
+    <div class="content">
+        ${markdownHtml || this.getEmptyState()}
+    </div>
+
+    <script nonce="${nonce}">
+        const vscode = acquireVsCodeApi();
+
+        // Handle breadcrumb navigation clicks
+        document.addEventListener('click', (event) => {
+            const target = event.target;
+
+            if (target.classList.contains('breadcrumb-item') &&
+                target.dataset.path &&
+                !target.classList.contains('breadcrumb-current')) {
+
+                vscode.postMessage({
+                    command: 'navigateToModule',
+                    folderPath: target.dataset.path
+                });
+            }
+        });
+    </script>
+</body>
+</html>`;
+    }
+
+    /**
+     * Generates empty state HTML when no documentation exists
+     */
+    private getEmptyState(): string {
+        return `
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <div class="empty-title">No Documentation Yet</div>
+                <div class="empty-description">
+                    Start documenting this file by editing the .docs.md file<br>
+                    The file has been created automatically for you
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Generates a random nonce for Content Security Policy
+     */
+    private getNonce(): string {
+        let text = '';
+        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        for (let i = 0; i < 32; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
+    }
+
+    public dispose(): void {
+        this.panel?.dispose();
+        this.fileWatcher.dispose();
+    }
+}
