@@ -11,14 +11,14 @@ import { DocumentationPanelManager } from './DocumentationPanelManager';
  * - Command registered for the book icon in editor title bar
  */
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Inline Documentation Viewer extension is now active');
+    console.log('Docky - Documentation Companion is now active');
 
     // Create the documentation panel manager
     const panelManager = new DocumentationPanelManager(context);
 
     // Register command for opening documentation
     const openDocsCommand = vscode.commands.registerCommand(
-        'inlineDocs.openDocumentation',
+        'docky.openDocumentation',
         async () => {
             const editor = vscode.window.activeTextEditor;
 
@@ -53,5 +53,5 @@ export function activate(context: vscode.ExtensionContext) {
  * Called when VS Code is shut down or extension is disabled
  */
 export function deactivate() {
-    console.log('Inline Documentation Viewer extension deactivated');
+    console.log('Docky extension deactivated');
 }

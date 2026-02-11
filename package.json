@@ -1,9 +1,38 @@
 {
-  "name": "inline-docs-viewer",
-  "displayName": "Inline Documentation Viewer",
-  "description": "Display and manage documentation files alongside your code",
+  "name": "docky",
+  "displayName": "Docky - Documentation Companion",
+  "description": "Keep your code documentation organized with beautiful side-by-side markdown viewing, auto-creation, and smart navigation",
   "version": "1.0.0",
-  "publisher": "your-publisher-name",
+  "publisher": "ahadjonovss",
+  "author": {
+    "name": "Samandar Ahadjonov",
+    "email": "samandarahadjonov@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/docky"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/docky/issues"
+  },
+  "homepage": "https://github.com/yourusername/docky#readme",
+  "keywords": [
+    "documentation",
+    "markdown",
+    "docs",
+    "comments",
+    "notes",
+    "readme",
+    "viewer",
+    "side-by-side",
+    "breadcrumb"
+  ],
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -18,15 +47,15 @@
   "contributes": {
     "commands": [
       {
-        "command": "inlineDocs.openDocumentation",
-        "title": "Open Documentation",
+        "command": "docky.openDocumentation",
+        "title": "Open Documentation with Docky",
         "icon": "$(book)"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "inlineDocs.openDocumentation",
+          "command": "docky.openDocumentation",
           "when": "editorTextFocus",
           "group": "navigation"
         }
