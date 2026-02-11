@@ -36,41 +36,41 @@ export class DockyTemplates {
 > **Type:** Service
 > **Created:** ${date}
 
-## 📋 Umumiy ma'lumot
+## 📋 Overview
 
-\`${className}\` - biznes logikasini boshqaruvchi servis.
+\`${className}\` - Service that manages business logic.
 
-## 🔑 Asosiy metodlar
+## 🔑 Key Methods
 
 ### \`methodName()\`
-- **Vazifasi:** Metodning vazifasini yozing
-- **Parametrlar:**
-  - \`param1\`: Parametr tavsifi
-- **Qaytaradi:** Qaytaradigan qiymat tavsifi
+- **Purpose:** Describe what this method does
+- **Parameters:**
+  - \`param1\`: Parameter description
+- **Returns:** Return value description
 
-## 📖 Foydalanish
+## 📖 Usage
 
 \`\`\`dart
 final service = ${className}();
 final result = await service.methodName();
 \`\`\`
 
-## 🔗 Bog'liqliklar
+## 🔗 Dependencies
 
 - **Dependencies:**
   - \`package:some_package\`
 - **Related files:**
   - \`file_name.dart\`
 
-## 📝 Izohlar
+## 📝 Notes
 
-- Muhim implementation detallari
-- Ma'lum muammolar yoki cheklovlar
-- TODO va kelajakdagi yaxshilashlar
+- Important implementation details
+- Known issues or limitations
+- TODO and future improvements
 
-## 📅 O'zgarishlar tarixi
+## 📅 Change History
 
-- **${date}**: Hujjat yaratildi
+- **${date}**: Documentation created
 `;
     }
 
@@ -81,17 +81,17 @@ final result = await service.methodName();
 > **Type:** Data Model
 > **Created:** ${date}
 
-## 📋 Umumiy ma'lumot
+## 📋 Overview
 
-\`${className}\` - ma'lumotlar modeli.
+\`${className}\` - Data model class.
 
-## 🏗️ Struktura
+## 🏗️ Structure
 
 \`\`\`dart
 class ${className} {
   final String id;
   final String name;
-  // ... boshqa fieldlar
+  // ... other fields
 
   ${className}({
     required this.id,
@@ -108,34 +108,34 @@ class ${className} {
 }
 \`\`\`
 
-## 📊 Fieldlar
+## 📊 Fields
 
-| Field | Type | Tavsif |
-|-------|------|--------|
+| Field | Type | Description |
+|-------|------|-------------|
 | \`id\` | \`String\` | Unique identifier |
-| \`name\` | \`String\` | Nomi |
+| \`name\` | \`String\` | Name |
 
-## 🔄 Metodlar
+## 🔄 Methods
 
 ### \`fromJson()\`
-JSON dan model obyektiga o'tkazish.
+Converts JSON to model object.
 
 ### \`toJson()\`
-Model obyektidan JSON ga o'tkazish.
+Converts model object to JSON.
 
 ### \`copyWith()\`
-Yangi nusxa yaratish (immutable pattern).
+Creates a copy with updated fields (immutable pattern).
 
-## 📖 Foydalanish
+## 📖 Usage
 
 \`\`\`dart
 final model = ${className}.fromJson(jsonData);
 final updated = model.copyWith(name: 'New Name');
 \`\`\`
 
-## 📅 O'zgarishlar tarixi
+## 📅 Change History
 
-- **${date}**: Model yaratildi
+- **${date}**: Model created
 `;
     }
 
@@ -151,11 +151,11 @@ final updated = model.copyWith(name: 'New Name');
 > **Type:** ${type}
 > **Created:** ${date}
 
-## 📋 Umumiy ma'lumot
+## 📋 Overview
 
-\`${className}\` - state management uchun ${type}.
+\`${className}\` - ${type} for state management.
 
-## 🎯 Holatlar (States)
+## 🎯 States
 
 \`\`\`dart
 abstract class ${className}State {}
@@ -172,7 +172,7 @@ class ${className}Error extends ${className}State {
 }
 \`\`\`
 
-## ⚡ Eventlar (Events)
+## ⚡ Events
 
 \`\`\`dart
 abstract class ${className}Event {}
@@ -184,13 +184,13 @@ class UpdateData extends ${className}Event {
 }
 \`\`\`
 
-## 🔄 Oqim (Flow)
+## 🔄 Flow
 
 \`\`\`
 User Action → Event → ${type} → State → UI Update
 \`\`\`
 
-## 📖 Foydalanish
+## 📖 Usage
 
 \`\`\`dart
 BlocProvider(
@@ -198,7 +198,7 @@ BlocProvider(
   child: MyWidget(),
 )
 
-// Widget ichida
+// Inside widget
 context.read<${className}>().add(LoadData());
 \`\`\`
 
@@ -216,9 +216,9 @@ blocTest<${className}, ${className}State>(
 );
 \`\`\`
 
-## 📅 O'zgarishlar tarixi
+## 📅 Change History
 
-- **${date}**: ${type} yaratildi
+- **${date}**: ${type} created
 `;
     }
 
@@ -234,11 +234,11 @@ blocTest<${className}, ${className}State>(
 > **Type:** ${type}
 > **Created:** ${date}
 
-## 📋 Umumiy ma'lumot
+## 📋 Overview
 
 \`${className}\` - Flutter ${type.toLowerCase()}.
 
-## 🎨 UI Struktura
+## 🎨 UI Structure
 
 \`\`\`dart
 class ${className} extends StatelessWidget {
@@ -252,13 +252,13 @@ class ${className} extends StatelessWidget {
 }
 \`\`\`
 
-## 🔧 Parametrlar
+## 🔧 Parameters
 
-| Parameter | Type | Required | Tavsif |
-|-----------|------|----------|--------|
-| \`param1\` | \`String\` | ✅ | Parametr tavsifi |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| \`param1\` | \`String\` | ✅ | Parameter description |
 
-## 📖 Foydalanish
+## 📖 Usage
 
 \`\`\`dart
 ${className}(
@@ -272,9 +272,9 @@ ${className}(
 - Feature 2
 - Feature 3
 
-## 📅 O'zgarishlar tarixi
+## 📅 Change History
 
-- **${date}**: Widget yaratildi
+- **${date}**: Widget created
 `;
     }
 
@@ -285,25 +285,25 @@ ${className}(
 > **Type:** Repository
 > **Created:** ${date}
 
-## 📋 Umumiy ma'lumot
+## 📋 Overview
 
-\`${className}\` - ma'lumotlar bilan ishlash uchun repository.
+\`${className}\` - Repository for data operations.
 
-## 🔄 CRUD Operatsiyalar
+## 🔄 CRUD Operations
 
 ### \`fetch()\`
-Ma'lumotlarni olish.
+Fetches data from the data source.
 
 ### \`create()\`
-Yangi ma'lumot yaratish.
+Creates new data entry.
 
 ### \`update()\`
-Ma'lumotni yangilash.
+Updates existing data.
 
 ### \`delete()\`
-Ma'lumotni o'chirish.
+Deletes data entry.
 
-## 📖 Foydalanish
+## 📖 Usage
 
 \`\`\`dart
 final repository = ${className}();
@@ -315,9 +315,9 @@ final data = await repository.fetch();
 - **Local:** SQLite, Hive, SharedPreferences
 - **Remote:** REST API, GraphQL, Firebase
 
-## 📅 O'zgarishlar tarixi
+## 📅 Change History
 
-- **${date}**: Repository yaratildi
+- **${date}**: Repository created
 `;
     }
 
@@ -333,25 +333,25 @@ final data = await repository.fetch();
 > **Type:** ${fileType}
 > **Created:** ${date}
 
-## 📋 Umumiy ma'lumot
+## 📋 Overview
 
-\`${className}\` tavsifi.
+\`${className}\` description.
 
-## 📖 Foydalanish
+## 📖 Usage
 
 \`\`\`dart
-// Foydalanish misoli
+// Usage example
 \`\`\`
 
-## 📝 Izohlar
+## 📝 Notes
 
-- Muhim ma'lumotlar
-- Cheklovlar
+- Important information
+- Limitations
 - TODO
 
-## 📅 O'zgarishlar tarixi
+## 📅 Change History
 
-- **${date}**: Hujjat yaratildi
+- **${date}**: Documentation created
 `;
     }
 

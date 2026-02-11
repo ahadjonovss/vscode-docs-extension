@@ -128,24 +128,24 @@ export class DocsFileHelper {
 > **File:** \`${fileName}\`
 > **Created:** ${date}
 
-## 📋 Umumiy ma'lumot
+## 📋 Overview
 
-Fayl tavsifi.
+File description.
 
-## 📖 Foydalanish
+## 📖 Usage
 
 \`\`\`
-// Kod misoli
+// Code example
 \`\`\`
 
-## 📝 Izohlar
+## 📝 Notes
 
-- Muhim ma'lumotlar
+- Important information
 - TODO
 
-## 📅 O'zgarishlar tarixi
+## 📅 Change History
 
-- **${date}**: Hujjat yaratildi
+- **${date}**: Documentation created
 `;
     }
 
@@ -161,11 +161,11 @@ Fayl tavsifi.
 > **Module:** \`${moduleName}\`
 > **Created:** ${date}
 
-## 📋 Umumiy ma'lumot
+## 📋 Overview
 
-**${pascalName}** moduli - ilovaning ${moduleName} qismi.
+**${pascalName}** module - ${moduleName} section of the application.
 
-## 🏗️ Struktura
+## 🏗️ Structure
 
 \`\`\`
 ${moduleName}/
@@ -176,38 +176,38 @@ ${moduleName}/
     └── ${moduleName}_widget.dart
 \`\`\`
 
-## 🔑 Asosiy komponentlar
+## 🔑 Key Components
 
 ### Service Layer
-- **${pascalName}Service** - biznes logika
+- **${pascalName}Service** - Business logic
 
 ### Data Layer
-- **${pascalName}Model** - ma'lumotlar modeli
+- **${pascalName}Model** - Data model
 
 ### Presentation Layer
-- **${pascalName}Controller** - state management
-- **${pascalName}Widget** - UI komponentlar
+- **${pascalName}Controller** - State management
+- **${pascalName}Widget** - UI components
 
-## 📖 Foydalanish
+## 📖 Usage
 
 \`\`\`dart
-// Module dan foydalanish
+// Module usage
 import 'package:app/${moduleName}/${moduleName}_service.dart';
 
 final service = ${pascalName}Service();
 \`\`\`
 
-## 🔗 Bog'liqliklar
+## 🔗 Dependencies
 
 ### External
 - \`package:flutter/material.dart\`
 
 ### Internal
-- Boshqa modullar
+- Other modules
 
-## 📅 O'zgarishlar tarixi
+## 📅 Change History
 
-- **${date}**: Module yaratildi
+- **${date}**: Module created
 `;
     }
 

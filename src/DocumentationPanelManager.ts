@@ -507,10 +507,11 @@ export class DocumentationPanelManager implements vscode.Disposable {
     <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
 
-        // Handle breadcrumb navigation clicks
+        // Handle all click events
         document.addEventListener('click', (event) => {
             const target = event.target;
 
+            // Handle breadcrumb navigation clicks
             if (target.classList.contains('breadcrumb-item') &&
                 target.dataset.path &&
                 !target.classList.contains('breadcrumb-current')) {
@@ -519,6 +520,17 @@ export class DocumentationPanelManager implements vscode.Disposable {
                     command: 'navigateToModule',
                     folderPath: target.dataset.path
                 });
+            }
+
+            // Handle create docs button clicks
+            if (target.id === 'createDocsBtn' || target.classList.contains('add-docs-button')) {
+                const sourceFile = target.dataset.source;
+                if (sourceFile) {
+                    vscode.postMessage({
+                        command: 'createDocs',
+                        sourceFile: sourceFile
+                    });
+                }
             }
         });
     </script>
@@ -593,23 +605,15 @@ export class DocumentationPanelManager implements vscode.Disposable {
         return `
             <div class="empty-state">
                 <div class="empty-icon">📝</div>
-                <div class="empty-title">Hujjat qo'shilmagan</div>
+                <div class="empty-title">No Documentation</div>
                 <div class="empty-description">
-                    Ushbu fayl uchun hujjat mavjud emas<br>
+                    This file doesn't have documentation yet<br>
                     <code style="font-size: 0.9em; opacity: 0.7;">${displayPath}</code>
                 </div>
-                <button class="add-docs-button" onclick="createDocs()">
-                    📄 Yangi hujjat yaratish
+                <button class="add-docs-button" id="createDocsBtn" data-source="${escapedPath}">
+                    📄 Create Documentation
                 </button>
             </div>
-            <script>
-                function createDocs() {
-                    vscode.postMessage({
-                        command: 'createDocs',
-                        sourceFile: '${escapedPath}'
-                    });
-                }
-            </script>
         `;
     }
 

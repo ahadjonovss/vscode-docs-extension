@@ -288,4 +288,47 @@ export class MappingManager {
 
         return !!config.mappings[relativeSource];
     }
+
+    /**
+     * Updates mapping when a source file is renamed/moved
+     */
+    public updateMappingOnFileRename(oldPath: string, newPath: string): void {
+        const workspaceRoot = this.getWorkspaceRoot();
+        if (!workspaceRoot) {
+            return;
+        }
+
+        const config = this.readConfig();
+        const oldRelative = path.relative(workspaceRoot, oldPath);
+        const newRelative = path.relative(workspaceRoot, newPath);
+
+        // If the old path has a mapping, update it to the new path
+        if (config.mappings[oldRelative]) {
+            const docsPath = config.mappings[oldRelative];
+            delete config.mappings[oldRelative];
+            config.mappings[newRelative] = docsPath;
+
+            this.writeConfig(config);
+            console.log(`Updated mapping: ${oldRelative} -> ${newRelative}`);
+        }
+    }
+
+    /**
+     * Removes mapping when a source file is deleted
+     */
+    public removeMappingOnFileDelete(filePath: string): void {
+        const workspaceRoot = this.getWorkspaceRoot();
+        if (!workspaceRoot) {
+            return;
+        }
+
+        const config = this.readConfig();
+        const relativeSource = path.relative(workspaceRoot, filePath);
+
+        if (config.mappings[relativeSource]) {
+            delete config.mappings[relativeSource];
+            this.writeConfig(config);
+            console.log(`Removed mapping for deleted file: ${relativeSource}`);
+        }
+    }
 }
