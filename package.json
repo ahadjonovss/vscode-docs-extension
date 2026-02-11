@@ -26,9 +26,11 @@
     "readme",
     "viewer",
     "side-by-side",
-    "breadcrumb"
+    "breadcrumb",
+    "dart",
+    "flutter"
   ],
-  "icon": "icon.png",
+  "icon": "assets/images/logo.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
@@ -37,8 +39,7 @@
     "vscode": "^1.75.0"
   },
   "categories": [
-    "Other",
-    "Documentation"
+    "Other"
   ],
   "activationEvents": [
     "onStartupFinished"
