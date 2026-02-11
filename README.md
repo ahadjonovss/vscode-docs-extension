@@ -131,7 +131,7 @@ your-project/
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/docky
+git clone https://github.com/ahadjonovss/vscode-docs-extension
 cd docky
 
 # Install dependencies
@@ -174,8 +174,8 @@ If you find Docky useful, consider [buying me a coffee](https://www.tirikchilik.
 ## 📞 Links
 
 - 🌐 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ahadjonovss.docky)
-- 🐛 [Report Issues](https://github.com/yourusername/docky/issues)
-- ⭐ [Star on GitHub](https://github.com/yourusername/docky)
+- 🐛 [Report Issues](https://github.com/ahadjonovss/vscode-docs-extension/issues)
+- ⭐ [Star on GitHub](https://github.com/ahadjonovss/vscode-docs-extension)
 
 ---
 
