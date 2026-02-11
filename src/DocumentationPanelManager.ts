@@ -45,8 +45,7 @@ export class DocumentationPanelManager implements vscode.Disposable {
     public async showDocumentation(sourceFilePath: string): Promise<void> {
         const docsPath = this.docsHelper.getDocsFilePath(sourceFilePath);
 
-        // Ensure docs file exists (create with template if needed)
-        await this.docsHelper.ensureDocsFileExists(docsPath, sourceFilePath);
+        // DO NOT auto-create docs file - let user create it manually
 
         if (this.panel) {
             // Panel exists, just reveal and update content
@@ -57,12 +56,14 @@ export class DocumentationPanelManager implements vscode.Disposable {
             this.createPanel(sourceFilePath, docsPath);
         }
 
-        // Watch the docs file for changes
-        this.fileWatcher.watchFile(docsPath, () => {
-            if (this.panel && this.currentSourceFile) {
-                this.updateContent(this.currentSourceFile, docsPath);
-            }
-        });
+        // Watch the docs file for changes (if it exists)
+        if (fs.existsSync(docsPath)) {
+            this.fileWatcher.watchFile(docsPath, () => {
+                if (this.panel && this.currentSourceFile) {
+                    this.updateContent(this.currentSourceFile, docsPath);
+                }
+            });
+        }
     }
 
     /**
@@ -74,15 +75,17 @@ export class DocumentationPanelManager implements vscode.Disposable {
         }
 
         const docsPath = this.docsHelper.getDocsFilePath(sourceFilePath);
-        await this.docsHelper.ensureDocsFileExists(docsPath, sourceFilePath);
+        // DO NOT auto-create - just update view
         await this.updateContent(sourceFilePath, docsPath);
 
-        // Update file watcher
-        this.fileWatcher.watchFile(docsPath, () => {
-            if (this.panel && this.currentSourceFile) {
-                this.updateContent(this.currentSourceFile, docsPath);
-            }
-        });
+        // Update file watcher (if docs file exists)
+        if (fs.existsSync(docsPath)) {
+            this.fileWatcher.watchFile(docsPath, () => {
+                if (this.panel && this.currentSourceFile) {
+                    this.updateContent(this.currentSourceFile, docsPath);
+                }
+            });
+        }
     }
 
     /**
@@ -107,11 +110,13 @@ export class DocumentationPanelManager implements vscode.Disposable {
             }
         );
 
-        // Handle messages from webview (breadcrumb clicks)
+        // Handle messages from webview (breadcrumb clicks and create docs)
         this.panel.webview.onDidReceiveMessage(
             async (message) => {
                 if (message.command === 'navigateToModule') {
                     await this.navigateToModuleDocs(message.folderPath);
+                } else if (message.command === 'createDocs') {
+                    await this.createAndOpenDocsFile(message.sourceFile);
                 }
             }
         );
@@ -139,12 +144,15 @@ export class DocumentationPanelManager implements vscode.Disposable {
 
         // Read markdown content
         let markdownContent = '';
+        let htmlContent = '';
+
         if (fs.existsSync(docsPath)) {
             markdownContent = fs.readFileSync(docsPath, 'utf-8');
+            htmlContent = this.md.render(markdownContent);
+        } else {
+            // No docs file exists - show empty state with button
+            htmlContent = this.getEmptyState(sourceFilePath);
         }
-
-        // Render markdown to HTML
-        const htmlContent = this.md.render(markdownContent);
 
         // Generate breadcrumb
         const breadcrumb = this.breadcrumbBuilder.buildBreadcrumb(sourceFilePath, false);
@@ -168,16 +176,18 @@ export class DocumentationPanelManager implements vscode.Disposable {
         const moduleName = path.basename(folderPath);
         const moduleDocsPath = path.join(folderPath, `${moduleName}.module.docs.md`);
 
-        // Ensure module docs file exists
-        await this.docsHelper.ensureModuleDocsFileExists(moduleDocsPath, moduleName);
+        // DO NOT auto-create module docs - let user create manually
 
         // Read and render module docs
-        let markdownContent = '';
+        let htmlContent = '';
         if (fs.existsSync(moduleDocsPath)) {
-            markdownContent = fs.readFileSync(moduleDocsPath, 'utf-8');
+            const markdownContent = fs.readFileSync(moduleDocsPath, 'utf-8');
+            htmlContent = this.md.render(markdownContent);
+        } else {
+            // Show empty state with button to create module docs
+            htmlContent = this.getEmptyState(moduleDocsPath);
         }
 
-        const htmlContent = this.md.render(markdownContent);
         const breadcrumb = this.breadcrumbBuilder.buildBreadcrumb(folderPath, true);
 
         if (this.panel) {
@@ -190,12 +200,14 @@ export class DocumentationPanelManager implements vscode.Disposable {
             );
         }
 
-        // Watch module docs file
-        this.fileWatcher.watchFile(moduleDocsPath, () => {
-            if (this.panel) {
-                this.navigateToModuleDocs(folderPath);
-            }
-        });
+        // Watch module docs file (if exists)
+        if (fs.existsSync(moduleDocsPath)) {
+            this.fileWatcher.watchFile(moduleDocsPath, () => {
+                if (this.panel) {
+                    this.navigateToModuleDocs(folderPath);
+                }
+            });
+        }
     }
 
     /**
@@ -447,6 +459,28 @@ export class DocumentationPanelManager implements vscode.Disposable {
         .empty-description {
             font-size: 1em;
             opacity: 0.8;
+            margin-bottom: 24px;
+        }
+
+        .add-docs-button {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-family: var(--vscode-font-family);
+            font-weight: 500;
+        }
+
+        .add-docs-button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        .add-docs-button:active {
+            transform: translateY(1px);
         }
     </style>
 </head>
@@ -461,7 +495,7 @@ export class DocumentationPanelManager implements vscode.Disposable {
     </div>
 
     <div class="content">
-        ${markdownHtml || this.getEmptyState()}
+        ${markdownHtml}
     </div>
 
     <script nonce="${nonce}">
@@ -487,18 +521,75 @@ export class DocumentationPanelManager implements vscode.Disposable {
     }
 
     /**
+     * Creates and opens the docs file for editing
+     */
+    private async createAndOpenDocsFile(sourceFilePath: string): Promise<void> {
+        // Check if this is a module docs path (.module.docs.md)
+        const isModuleDocs = sourceFilePath.endsWith('.module.docs.md');
+
+        let docsPath: string;
+
+        if (isModuleDocs) {
+            // It's already a module docs path
+            docsPath = sourceFilePath;
+            const folderPath = path.dirname(docsPath);
+            const moduleName = path.basename(folderPath);
+            await this.docsHelper.ensureModuleDocsFileExists(docsPath, moduleName);
+        } else {
+            // Regular file docs
+            docsPath = this.docsHelper.getDocsFilePath(sourceFilePath);
+            await this.docsHelper.ensureDocsFileExists(docsPath, sourceFilePath);
+        }
+
+        // Open the docs file in editor
+        const doc = await vscode.workspace.openTextDocument(docsPath);
+        await vscode.window.showTextDocument(doc, vscode.ViewColumn.One);
+
+        // Refresh the panel
+        if (isModuleDocs) {
+            const folderPath = path.dirname(docsPath);
+            await this.navigateToModuleDocs(folderPath);
+        } else {
+            await this.updateContent(sourceFilePath, docsPath);
+        }
+
+        // Start watching the file
+        this.fileWatcher.watchFile(docsPath, () => {
+            if (this.panel) {
+                if (isModuleDocs) {
+                    const folderPath = path.dirname(docsPath);
+                    this.navigateToModuleDocs(folderPath);
+                } else if (this.currentSourceFile) {
+                    this.updateContent(this.currentSourceFile, docsPath);
+                }
+            }
+        });
+    }
+
+    /**
      * Generates empty state HTML when no documentation exists
      */
-    private getEmptyState(): string {
+    private getEmptyState(sourceFilePath: string): string {
+        const escapedPath = sourceFilePath.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         return `
             <div class="empty-state">
                 <div class="empty-icon">📝</div>
-                <div class="empty-title">No Documentation Yet</div>
+                <div class="empty-title">Hujjat qo'shilmagan</div>
                 <div class="empty-description">
-                    Start documenting this file by editing the .docs.md file<br>
-                    The file has been created automatically for you
+                    Ushbu fayl uchun hujjat mavjud emas
                 </div>
+                <button class="add-docs-button" onclick="createDocs()">
+                    📄 Hujjat qo'shish
+                </button>
             </div>
+            <script>
+                function createDocs() {
+                    vscode.postMessage({
+                        command: 'createDocs',
+                        sourceFile: '${escapedPath}'
+                    });
+                }
+            </script>
         `;
     }
 
