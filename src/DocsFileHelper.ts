@@ -1,41 +1,68 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { MappingManager } from './MappingManager';
+import { DockyTemplates } from './DockyTemplates';
 
 /**
  * Helper class for managing documentation files
- * Handles path resolution, file creation, and default content generation
+ * NOW USES: Separate docky/ folder with .docky.json mapping
  *
- * Naming convention: <filename>.<ext>.docs.md
- * Example: user.service.ts -> user.service.ts.docs.md
+ * OLD: user.service.ts → user.service.ts.docs.md (same folder)
+ * NEW: lib/services/auth_service.dart → docky/services/auth-service.md
  */
 export class DocsFileHelper {
-    /**
-     * Gets the documentation file path for a source file
-     * Pattern: <filename>.docs.md (placed in same directory)
-     */
-    public getDocsFilePath(sourceFilePath: string): string {
-        const dir = path.dirname(sourceFilePath);
-        const fileName = path.basename(sourceFilePath);
-        return path.join(dir, `${fileName}.docs.md`);
+    private mappingManager: MappingManager;
+
+    constructor() {
+        this.mappingManager = new MappingManager();
     }
 
     /**
-     * Ensures a documentation file exists
-     * Creates it with default template if it doesn't exist
+     * Gets the documentation file path for a source file
+     * Uses mapping from .docky.json
+     */
+    public getDocsFilePath(sourceFilePath: string): string | undefined {
+        return this.mappingManager.getDocsPath(sourceFilePath);
+    }
+
+    /**
+     * Suggests a documentation file path
+     * For Dart: lib/features/auth/auth_service.dart → docky/auth/auth-service.md
+     */
+    public suggestDocsPath(sourceFilePath: string): string | undefined {
+        return this.mappingManager.suggestDocsPath(sourceFilePath);
+    }
+
+    /**
+     * Creates a new docs file and adds mapping
      */
     public async ensureDocsFileExists(
-        docsPath: string,
+        docsFilePath: string,
         sourceFilePath: string
     ): Promise<void> {
-        if (fs.existsSync(docsPath)) {
+        // Ensure docky folder exists
+        this.mappingManager.ensureDockyFolderExists();
+
+        // Ensure parent directory exists
+        const docsDir = path.dirname(docsFilePath);
+        if (!fs.existsSync(docsDir)) {
+            fs.mkdirSync(docsDir, { recursive: true });
+        }
+
+        // If file already exists, don't overwrite
+        if (fs.existsSync(docsFilePath)) {
             return;
         }
 
-        const defaultContent = this.generateDefaultFileContent(sourceFilePath);
+        // Generate default content
+        const defaultContent = this.generateDefaultContent(sourceFilePath);
 
         try {
-            fs.writeFileSync(docsPath, defaultContent, 'utf-8');
-            console.log(`Created documentation file: ${docsPath}`);
+            fs.writeFileSync(docsFilePath, defaultContent, 'utf-8');
+            console.log(`Created docs file: ${docsFilePath}`);
+
+            // Add mapping to .docky.json
+            this.mappingManager.addMapping(sourceFilePath, docsFilePath);
         } catch (error) {
             console.error(`Failed to create docs file: ${error}`);
             throw error;
@@ -43,12 +70,18 @@ export class DocsFileHelper {
     }
 
     /**
-     * Ensures a module documentation file exists
+     * Creates module documentation
      */
     public async ensureModuleDocsFileExists(
         moduleDocsPath: string,
         moduleName: string
     ): Promise<void> {
+        // Ensure parent directory exists
+        const docsDir = path.dirname(moduleDocsPath);
+        if (!fs.existsSync(docsDir)) {
+            fs.mkdirSync(docsDir, { recursive: true });
+        }
+
         if (fs.existsSync(moduleDocsPath)) {
             return;
         }
@@ -65,229 +98,140 @@ export class DocsFileHelper {
     }
 
     /**
-     * Generates default content for file-level documentation
+     * Generates default content for Dart files
      */
-    private generateDefaultFileContent(sourceFilePath: string): string {
+    private generateDefaultContent(sourceFilePath: string): string {
+        const fileName = path.basename(sourceFilePath);
+        const ext = path.extname(sourceFilePath);
+
+        // Check if it's a Dart file
+        if (ext === '.dart') {
+            const fileType = DockyTemplates.inferDartFileType(fileName);
+            return DockyTemplates.generateDartTemplate(fileName, fileType);
+        }
+
+        // Fallback to generic template for non-Dart files
+        return this.generateGenericTemplate(sourceFilePath);
+    }
+
+    /**
+     * Generic template for non-Dart files
+     */
+    private generateGenericTemplate(sourceFilePath: string): string {
         const fileName = path.basename(sourceFilePath);
         const ext = path.extname(sourceFilePath);
         const baseName = path.basename(sourceFilePath, ext);
-        const fileType = this.inferFileType(fileName);
-        const language = this.getLanguageFromExtension(ext);
         const date = new Date().toISOString().split('T')[0];
 
         return `# ${baseName}
 
 > **File:** \`${fileName}\`
-> **Type:** ${fileType}
 > **Created:** ${date}
 
-## 📋 Overview
+## 📋 Umumiy ma'lumot
 
-Brief description of what this file does and its purpose in the project.
+Fayl tavsifi.
 
-## 🔑 Key Components
+## 📖 Foydalanish
 
-### Main Functions/Classes
-
-- **FunctionName**: Description of what it does
-- **ClassName**: Purpose and responsibilities
-
-## 📖 Usage
-
-\`\`\`${language}
-// Example usage
-import { Something } from './${baseName}';
-
-const result = Something();
+\`\`\`
+// Kod misoli
 \`\`\`
 
-## 🔗 Dependencies
+## 📝 Izohlar
 
-- List key external dependencies
-- List internal module dependencies
+- Muhim ma'lumotlar
+- TODO
 
-## 📝 Notes
+## 📅 O'zgarishlar tarixi
 
-- Important implementation details
-- Known issues or limitations
-- TODOs and future improvements
-- Related files or modules
-
-## 📅 Changelog
-
-- **${date}**: Initial documentation created
+- **${date}**: Hujjat yaratildi
 `;
     }
 
     /**
-     * Generates default content for module-level documentation
+     * Generates default module content
      */
     private generateDefaultModuleContent(moduleName: string): string {
         const date = new Date().toISOString().split('T')[0];
+        const pascalName = this.toPascalCase(moduleName);
 
-        return `# ${moduleName} Module
+        return `# ${pascalName} Module
 
 > **Module:** \`${moduleName}\`
 > **Created:** ${date}
 
-## 📋 Overview
+## 📋 Umumiy ma'lumot
 
-High-level description of the **${moduleName}** module and its responsibilities within the application.
+**${pascalName}** moduli - ilovaning ${moduleName} qismi.
 
-## 🏗️ Architecture
-
-### Module Structure
+## 🏗️ Struktura
 
 \`\`\`
 ${moduleName}/
-├── index.ts                 # Module entry point
-├── ${moduleName}.service.ts # Core business logic
-├── ${moduleName}.model.ts   # Data models/types
-├── ${moduleName}.controller.ts
-└── ${moduleName}.module.docs.md
+├── ${moduleName}_service.dart
+├── ${moduleName}_model.dart
+├── ${moduleName}_controller.dart
+└── widgets/
+    └── ${moduleName}_widget.dart
 \`\`\`
 
-### Key Components
+## 🔑 Asosiy komponentlar
 
-1. **Service Layer**
-   - Handles business logic
-   - Data processing and validation
+### Service Layer
+- **${pascalName}Service** - biznes logika
 
-2. **Controller Layer**
-   - API endpoints
-   - Request/response handling
+### Data Layer
+- **${pascalName}Model** - ma'lumotlar modeli
 
-3. **Model Layer**
-   - Data structures
-   - Type definitions
+### Presentation Layer
+- **${pascalName}Controller** - state management
+- **${pascalName}Widget** - UI komponentlar
 
-## 📖 Usage
+## 📖 Foydalanish
 
-\`\`\`typescript
-import { ${this.capitalize(moduleName)}Service } from './${moduleName}';
+\`\`\`dart
+// Module dan foydalanish
+import 'package:app/${moduleName}/${moduleName}_service.dart';
 
-const service = new ${this.capitalize(moduleName)}Service();
-const result = await service.doSomething();
+final service = ${pascalName}Service();
 \`\`\`
 
-## 🔌 API Reference
+## 🔗 Bog'liqliklar
 
-### Public Methods
+### External
+- \`package:flutter/material.dart\`
 
-#### \`methodName(params): ReturnType\`
+### Internal
+- Boshqa modullar
 
-Description of what this method does.
+## 📅 O'zgarishlar tarixi
 
-**Parameters:**
-- \`param1: Type\` - Description
-- \`param2: Type\` - Description
-
-**Returns:** Description of return value
-
-**Example:**
-\`\`\`typescript
-const result = methodName(param1, param2);
-\`\`\`
-
-## 🔗 Dependencies
-
-### External Dependencies
-- List npm packages used
-- Third-party libraries
-
-### Internal Dependencies
-- Other modules this depends on
-- Shared utilities
-
-## 🎯 Design Decisions
-
-- **Why this approach?** Explanation of architectural choices
-- **Trade-offs:** What was considered and why
-- **Future plans:** Planned improvements or refactoring
-
-## 🧪 Testing
-
-### Running Tests
-\`\`\`bash
-npm test ${moduleName}
-\`\`\`
-
-### Test Coverage
-- Unit tests
-- Integration tests
-- Key test scenarios
-
-## 📅 Changelog
-
-- **${date}**: Module documentation created
+- **${date}**: Module yaratildi
 `;
     }
 
     /**
-     * Infers file type from filename patterns
+     * Converts string to PascalCase
      */
-    private inferFileType(fileName: string): string {
-        const lower = fileName.toLowerCase();
-
-        if (lower.includes('service')) return 'Service';
-        if (lower.includes('controller')) return 'Controller';
-        if (lower.includes('component')) return 'Component';
-        if (lower.includes('model') || lower.includes('entity')) return 'Model/Entity';
-        if (lower.includes('util') || lower.includes('helper')) return 'Utility';
-        if (lower.includes('test') || lower.includes('spec')) return 'Test File';
-        if (lower.includes('config')) return 'Configuration';
-        if (lower.includes('type') || lower.includes('interface')) return 'Type Definitions';
-        if (lower.includes('middleware')) return 'Middleware';
-        if (lower.includes('route') || lower.includes('router')) return 'Router';
-        if (lower.includes('repository') || lower.includes('repo')) return 'Repository';
-        if (lower.includes('dto')) return 'Data Transfer Object';
-        if (lower.includes('guard')) return 'Guard';
-        if (lower.includes('interceptor')) return 'Interceptor';
-        if (lower.includes('decorator')) return 'Decorator';
-        if (lower.includes('pipe')) return 'Pipe';
-        if (lower.includes('module')) return 'Module';
-
-        return 'Source File';
+    private toPascalCase(str: string): string {
+        return str
+            .split(/[-_\s]/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join('');
     }
 
     /**
-     * Gets language identifier for code blocks
+     * Checks if source file has a mapping
      */
-    private getLanguageFromExtension(ext: string): string {
-        const langMap: { [key: string]: string } = {
-            '.ts': 'typescript',
-            '.tsx': 'typescript',
-            '.js': 'javascript',
-            '.jsx': 'javascript',
-            '.py': 'python',
-            '.java': 'java',
-            '.cs': 'csharp',
-            '.go': 'go',
-            '.rs': 'rust',
-            '.cpp': 'cpp',
-            '.c': 'c',
-            '.rb': 'ruby',
-            '.php': 'php',
-            '.swift': 'swift',
-            '.kt': 'kotlin',
-            '.dart': 'dart',
-            '.vue': 'vue',
-            '.html': 'html',
-            '.css': 'css',
-            '.scss': 'scss',
-            '.json': 'json',
-            '.yaml': 'yaml',
-            '.yml': 'yaml',
-            '.sh': 'bash',
-        };
-
-        return langMap[ext.toLowerCase()] || 'javascript';
+    public hasMapping(sourceFilePath: string): boolean {
+        return this.mappingManager.hasMapping(sourceFilePath);
     }
 
     /**
-     * Capitalizes first letter of a string
+     * Gets the MappingManager instance
      */
-    private capitalize(str: string): string {
-        return str.charAt(0).toUpperCase() + str.slice(1);
+    public getMappingManager(): MappingManager {
+        return this.mappingManager;
     }
 }

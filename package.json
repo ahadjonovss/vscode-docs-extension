@@ -49,7 +49,10 @@
       {
         "command": "docky.openDocumentation",
         "title": "Open Documentation with Docky",
-        "icon": "$(book)"
+        "icon": {
+          "light": "assets/images/open_doc.png",
+          "dark": "assets/images/open_doc.png"
+        }
       }
     ],
     "menus": {
