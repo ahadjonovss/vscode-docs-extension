@@ -2,7 +2,7 @@
   "name": "docky",
   "displayName": "Docky - Documentation Companion",
   "description": "Keep your code documentation organized with beautiful side-by-side markdown viewing. Works with all languages - JavaScript, TypeScript, Python, Java, Dart, and more!",
-  "version": "1.1.13",
+  "version": "1.1.14",
   "publisher": "ahadjonovss",
   "author": {
     "name": "Samandar Ahadjonov",

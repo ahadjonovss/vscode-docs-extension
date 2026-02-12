@@ -5,13 +5,14 @@ import * as path from 'path';
 /**
  * Manages the .docky.json mapping file
  * Maps source files to their documentation files in the docky/ folder
+ * Mirrors the exact project folder structure
  *
  * Example .docky.json:
  * {
  *   "dockyFolder": "docky",
  *   "mappings": {
- *     "lib/features/auth/auth_service.dart": "docky/auth/auth-service.md",
- *     "lib/models/user_model.dart": "docky/models/user-model.md"
+ *     "lib/features/auth/data/auth_service.dart": "docky/lib/features/auth/data/auth-service.md",
+ *     "lib/models/user_model.dart": "docky/lib/models/user-model.md"
  *   }
  * }
  */
@@ -149,7 +150,8 @@ export class MappingManager {
 
     /**
      * Suggests a docs file path based on source file structure
-     * For Dart: lib/features/auth/auth_service.dart → docky/auth/auth-service.md
+     * Mirrors the exact project structure in docky folder
+     * For example: lib/features/auth/data/auth_service.dart → docky/lib/features/auth/data/auth-service.md
      */
     public suggestDocsPath(sourceFilePath: string): string | undefined {
         const workspaceRoot = this.getWorkspaceRoot();
@@ -170,30 +172,9 @@ export class MappingManager {
         // Convert snake_case to kebab-case for docs
         const docsFileName = fileName.replace(/_/g, '-') + '.md';
 
-        // Get the parent folder name (for categorization)
-        const pathParts = parsed.dir.split(path.sep);
-
-        // For Dart structure like lib/features/auth/...
-        // We want to extract the feature/module name
-        let category = 'general';
-
-        if (pathParts.includes('features') || pathParts.includes('modules')) {
-            const featureIndex = pathParts.indexOf('features') || pathParts.indexOf('modules');
-            if (featureIndex >= 0 && pathParts.length > featureIndex + 1) {
-                category = pathParts[featureIndex + 1]; // e.g., "auth"
-            }
-        } else if (pathParts.includes('models')) {
-            category = 'models';
-        } else if (pathParts.includes('services')) {
-            category = 'services';
-        } else if (pathParts.includes('controllers')) {
-            category = 'controllers';
-        } else if (pathParts.includes('widgets') || pathParts.includes('screens')) {
-            category = 'ui';
-        }
-
-        // Build suggested path: docky/{category}/{filename}.md
-        const suggestedPath = path.join(workspaceRoot, dockyFolder, category, docsFileName);
+        // Mirror the exact directory structure
+        // lib/features/auth/data/auth_service.dart → docky/lib/features/auth/data/auth-service.md
+        const suggestedPath = path.join(workspaceRoot, dockyFolder, parsed.dir, docsFileName);
 
         return suggestedPath;
     }
