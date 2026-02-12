@@ -2,6 +2,12 @@
 
 All notable changes to the "Inline Documentation Viewer" extension will be documented in this file.
 
+## [1.1.8] - 2026-02-12
+
+### Fixed
+- 🐛 Fixed "command 'docky.openDocumentation' not found" error by correcting .vscodeignore configuration
+- 📦 Ensured all compiled JavaScript files are properly included in published extension package
+
 ## [1.0.0] - 2026-02-11
 
 ### Added
