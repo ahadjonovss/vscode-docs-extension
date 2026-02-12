@@ -1,6 +1,42 @@
 # Change Log
 
-All notable changes to the "Inline Documentation Viewer" extension will be documented in this file.
+All notable changes to the "Docky - Documentation Companion" extension will be documented in this file.
+
+## [1.1.14] - 2026-02-12
+
+### Changed
+- 🔄 **Major:** Docky folder now mirrors exact project structure
+- 📁 Changed from simplified categories to full path mirroring
+- Before: `lib/features/auth/data/auth_service.dart` → `docky/auth/auth-service.md`
+- After: `lib/features/auth/data/auth_service.dart` → `docky/lib/features/auth/data/auth-service.md`
+- 🎯 Makes navigation more intuitive and maintains parallel structures
+
+### Documentation
+- 📝 Updated README to show new folder structure
+- 📖 Updated comments to reflect mirrored structure
+
+## [1.1.13] - 2026-02-12
+
+### Fixed
+- 🐛 **Critical Fix:** Included `node_modules` in package to fix `markdown-it` dependency error
+- 📦 Fixed `.vscodeignore` excluding all dependencies
+- ✅ Extension now works properly when installed from marketplace
+- 🔧 Removed redundant activation events as VSCode auto-generates them
+
+### Changed
+- 🎨 Updated `when` clause to `resourceScheme == file` for better reliability
+- 🧹 Cleaned up debug logging for production release
+
+### Technical
+- Removed `node_modules/**` from `.vscodeignore`
+- Changed activation to `"*"` for immediate activation
+- Package size increased to 3.4 MB (includes markdown-it and dependencies)
+
+## [1.1.12] - 2026-02-12
+
+### Fixed
+- 🐛 Attempted to fix command registration issues
+- 🔧 Updated when clause and removed redundant activation event
 
 ## [1.1.11] - 2026-02-12
 

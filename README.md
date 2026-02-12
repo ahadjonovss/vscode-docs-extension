@@ -4,7 +4,7 @@
 
 A powerful VS Code extension that helps you maintain clean, organized documentation in a separate `docky/` folder with smart file mapping.
 
-![Version](https://img.shields.io/badge/version-1.1.5-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.14-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.75%2B-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -19,6 +19,7 @@ View beautifully rendered markdown documentation in a panel right beside your co
 
 ### 🗂️ Separate Docky Folder
 - All documentation stored in dedicated `docky/` folder
+- **Mirrors your project structure exactly** - easy to navigate!
 - Smart mapping system with `.docky.json`
 - Keeps your codebase clean and organized
 
@@ -70,15 +71,25 @@ Or search for "Docky" in VS Code Extensions (`Ctrl+Shift+X`)
 
 ### File Structure
 
+Docky mirrors your project structure exactly in the `docky/` folder:
+
 ```
 your-project/
 ├── lib/
 │   └── features/
 │       └── auth/
-│           └── auth_service.dart
-├── docky/                           # All docs here!
-│   └── auth/
-│       └── auth-service.md
+│           ├── data/
+│           │   └── auth_service.dart
+│           └── presentation/
+│               └── auth_screen.dart
+├── docky/                           # Mirrors project structure!
+│   └── lib/
+│       └── features/
+│           └── auth/
+│               ├── data/
+│               │   └── auth-service.md
+│               └── presentation/
+│                   └── auth-screen.md
 └── .docky.json                      # Mapping file
 ```
 
@@ -88,8 +99,10 @@ your-project/
 
 ```json
 {
+  "dockyFolder": "docky",
   "mappings": {
-    "lib/features/auth/auth_service.dart": "docky/auth/auth-service.md"
+    "lib/features/auth/data/auth_service.dart": "docky/lib/features/auth/data/auth-service.md",
+    "lib/features/auth/presentation/auth_screen.dart": "docky/lib/features/auth/presentation/auth-screen.md"
   }
 }
 ```
