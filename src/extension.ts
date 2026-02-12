@@ -25,10 +25,18 @@ export function activate(context: vscode.ExtensionContext) {
     const openDocsCommand = vscode.commands.registerCommand(
         'docky.openDocumentation',
         async () => {
+            console.log('🔍 Docky: openDocumentation command triggered');
             const editor = vscode.window.activeTextEditor;
+            console.log('🔍 Docky: Active editor:', editor ? editor.document.uri.toString() : 'none');
 
             if (!editor) {
                 vscode.window.showWarningMessage('No active file to show documentation for');
+                return;
+            }
+
+            // Check if it's a valid file (not output, debug, etc.)
+            if (editor.document.uri.scheme !== 'file') {
+                vscode.window.showWarningMessage('Documentation only works with file:// URIs');
                 return;
             }
 

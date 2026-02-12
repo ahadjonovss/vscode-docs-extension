@@ -2,6 +2,18 @@
 
 All notable changes to the "Inline Documentation Viewer" extension will be documented in this file.
 
+## [1.1.9] - 2026-02-12
+
+### Fixed
+- 🐛 Fixed "No active file to show documentation for" error by adding proper menu conditions
+- ✅ Added `when` clause to only show icon when editor is open and not readonly
+- 🔒 Added URI scheme validation to ensure documentation only works with file:// URIs
+- 🐞 Added debug logging for better troubleshooting
+
+### Changed
+- 🎨 Icon now only appears when a valid text file is open
+- 📝 Improved error messages for better user experience
+
 ## [1.1.8] - 2026-02-12
 
 ### Fixed
