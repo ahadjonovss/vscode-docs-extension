@@ -1,0 +1,25 @@
+# Publishing Docky v1.1.12 to VS Code Marketplace
+
+## Prerequisites:
+1. You need a Personal Access Token (PAT) from Azure DevOps
+2. You need to be logged in to vsce
+
+## Steps:
+
+# 1. Login to vsce (if not already logged in)
+vsce login ahadjonovss
+
+# 2. Publish the extension
+vsce publish
+
+# The above command will:
+# - Automatically increment version
+# - Package the extension
+# - Upload to marketplace
+
+## Alternative: Publish the VSIX directly
+vsce publish --packagePath docky-1.1.12.vsix
+
+## Note:
+If you don't have a PAT, you can create one at:
+https://dev.azure.com/ahadjonovss/_usersSettings/tokens
