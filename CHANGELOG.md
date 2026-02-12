@@ -2,6 +2,19 @@
 
 All notable changes to the "Inline Documentation Viewer" extension will be documented in this file.
 
+## [1.1.11] - 2026-02-12
+
+### Fixed
+- 🐛 **Critical Fix:** Simplified `when` clause to fix command registration issue
+- ✅ Changed to simpler `editorTextFocus` context for better compatibility
+- 🔧 Added explicit activation event for the command
+- ⚡ Extension now activates and registers command properly
+
+### Technical
+- Updated `when` clause to: `editorTextFocus`
+- Added `onCommand:docky.openDocumentation` to activation events
+- Ensures extension activates before command execution
+
 ## [1.1.10] - 2026-02-12
 
 ### Fixed
