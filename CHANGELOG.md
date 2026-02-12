@@ -2,6 +2,14 @@
 
 All notable changes to the "Docky - Documentation Companion" extension will be documented in this file.
 
+## [1.1.15] - 2026-02-12
+
+### Documentation
+- 📝 Updated README with complete folder structure examples
+- 📖 Updated changelog with versions 1.1.12, 1.1.13, and 1.1.14
+- 🎯 Clarified that Docky mirrors exact project structure
+- ✨ Republished to show updated documentation on marketplace
+
 ## [1.1.14] - 2026-02-12
 
 ### Changed

@@ -4,7 +4,7 @@
 
 A powerful VS Code extension that helps you maintain clean, organized documentation in a separate `docky/` folder with smart file mapping.
 
-![Version](https://img.shields.io/badge/version-1.1.14-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.15-blue.svg)
 ![VS Code](https://img.shields.io/badge/VS%20Code-1.75%2B-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
