@@ -2,6 +2,18 @@
 
 All notable changes to the "Inline Documentation Viewer" extension will be documented in this file.
 
+## [1.1.10] - 2026-02-12
+
+### Fixed
+- 🐛 **Critical Fix:** Corrected invalid `when` clause that caused "command not found" error
+- ✅ Changed from `activeEditor.isReadonly` to proper `editorReadonly` context
+- 🔧 Fixed menu contribution to use valid VSCode context keys
+- ⚡ Command now properly registers and works as expected
+
+### Technical
+- Updated `when` clause to: `resourceScheme == file && !editorReadonly`
+- Ensures icon only appears for valid file URIs and non-readonly editors
+
 ## [1.1.9] - 2026-02-12
 
 ### Fixed
