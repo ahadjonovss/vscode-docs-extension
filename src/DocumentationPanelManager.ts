@@ -183,7 +183,18 @@ export class DocumentationPanelManager implements vscode.Disposable {
      */
     private async navigateToModuleDocs(folderPath: string): Promise<void> {
         const moduleName = path.basename(folderPath);
-        const moduleDocsPath = path.join(folderPath, `${moduleName}.module.docs.md`);
+
+        // Mirror the folder structure in docky folder
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showErrorMessage('No workspace folder found');
+            return;
+        }
+
+        const workspaceRoot = workspaceFolders[0].uri.fsPath;
+        const relativeFolderPath = path.relative(workspaceRoot, folderPath);
+        const docsFileName = moduleName.replace(/_/g, '-') + '.module.md';
+        const moduleDocsPath = path.join(workspaceRoot, 'docky', relativeFolderPath, docsFileName);
 
         // DO NOT auto-create module docs - let user create manually
 

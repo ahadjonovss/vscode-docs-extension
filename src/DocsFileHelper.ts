@@ -4,10 +4,10 @@ import { MappingManager } from './MappingManager';
 
 /**
  * Helper class for managing documentation files
- * NOW USES: Separate docky/ folder with .docky.json mapping
+ * Uses separate docky/ folder with .docky.json mapping
+ * Mirrors exact project structure
  *
- * OLD: user.service.ts → user.service.ts.docs.md (same folder)
- * NEW: lib/services/auth_service.dart → docky/services/auth-service.md
+ * Example: lib/features/auth/data/auth_service.dart → docky/lib/features/auth/data/auth-service.md
  */
 export class DocsFileHelper {
     private mappingManager: MappingManager;
@@ -26,7 +26,8 @@ export class DocsFileHelper {
 
     /**
      * Suggests a documentation file path
-     * For Dart: lib/features/auth/auth_service.dart → docky/auth/auth-service.md
+     * Mirrors exact project structure
+     * Example: lib/features/auth/data/auth_service.dart → docky/lib/features/auth/data/auth-service.md
      */
     public suggestDocsPath(sourceFilePath: string): string | undefined {
         return this.mappingManager.suggestDocsPath(sourceFilePath);

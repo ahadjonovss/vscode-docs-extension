@@ -2,6 +2,18 @@
 
 All notable changes to the "Docky - Documentation Companion" extension will be documented in this file.
 
+## [1.1.16] - 2026-02-12
+
+### Fixed
+- 🐛 **Critical Fix:** Module documentation now created in `docky/` folder instead of source folder
+- 📁 Module docs now mirror exact project structure
+- Before: `lib/features/auth/auth.module.docs.md` (in source folder)
+- After: `docky/lib/features/auth/auth.module.md` (in docky folder)
+
+### Changed
+- 🎨 Module docs filename format: `module-name.module.md` (kebab-case)
+- ✨ Both file and module docs now consistently mirror project structure
+
 ## [1.1.15] - 2026-02-12
 
 ### Documentation
