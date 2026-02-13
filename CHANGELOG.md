@@ -2,6 +2,15 @@
 
 All notable changes to the "Docky - Documentation Companion" extension will be documented in this file.
 
+## [1.1.17] - 2026-02-13
+
+### Fixed
+- 🐛 **Critical Fix:** Module documentation path no longer duplicates "docky" folder
+- 🔧 Fixed breadcrumb navigation from within module docs creating incorrect paths
+- Before: Clicking folder from module docs created `docky/docky/lib/...`
+- After: Correctly creates `docky/lib/...` regardless of starting point
+- ✅ Both file docs and module docs now consistently mirror project structure
+
 ## [1.1.16] - 2026-02-12
 
 ### Fixed

@@ -192,9 +192,22 @@ export class DocumentationPanelManager implements vscode.Disposable {
         }
 
         const workspaceRoot = workspaceFolders[0].uri.fsPath;
-        const relativeFolderPath = path.relative(workspaceRoot, folderPath);
+        let relativeFolderPath = path.relative(workspaceRoot, folderPath);
+
+        // If the path already starts with docky folder, strip it
+        // This happens when user clicks breadcrumb from within module docs
+        const config = this.docsHelper.getMappingManager().readConfig();
+        const dockyFolder = config.dockyFolder;
+        if (relativeFolderPath.startsWith(dockyFolder + path.sep) || relativeFolderPath === dockyFolder) {
+            relativeFolderPath = relativeFolderPath.substring(dockyFolder.length);
+            // Remove leading separator if present
+            if (relativeFolderPath.startsWith(path.sep)) {
+                relativeFolderPath = relativeFolderPath.substring(path.sep.length);
+            }
+        }
+
         const docsFileName = moduleName.replace(/_/g, '-') + '.module.md';
-        const moduleDocsPath = path.join(workspaceRoot, 'docky', relativeFolderPath, docsFileName);
+        const moduleDocsPath = path.join(workspaceRoot, dockyFolder, relativeFolderPath, docsFileName);
 
         // DO NOT auto-create module docs - let user create manually
 
